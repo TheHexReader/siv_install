@@ -3,9 +3,14 @@ import os
 import random
 import ast
 import json
+import subprocess
 
 class Client:
     
+    PATH_TO_CHOCOLATEY = 'C:/ProgramData/chocolatey/choco.exe'
+    PATH_TO_CHOCO_LIB = 'C:/ProgramData/chocolatey/lib/'
+    CMD_INSTALL_CHOCOLATEY = "@\"%SystemRoot%\System32\WindowsPowerShell\\v1.0\powershell.exe\" -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command \"[System.Net.ServicePointManager]::SecurityProtocol = 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))\" && SET \"PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\\bin"
+
     PATH_TO_KEY = './profile.key'
     key_length = 128
 
@@ -54,13 +59,18 @@ class Client:
         print('Recived profile.')
 
     def install_programs(self):
-        pass
+        print('Installing programs.')
+        if not os.path.isfile(self.PATH_TO_CHOCOLATEY):
+           subprocess.call(self.CMD_INSTALL_CHOCOLATEY, stdout=subprocess.DEVNULL, shell=True)
+        for item in self.list_of_programms:
+            if not os.path.isdir(self.PATH_TO_CHOCO_LIB + item):
+                subprocess.call("choco install " + item, shell=True, stdout=subprocess.DEVNULL)
+        subprocess.call('choco upgrade all', shell=True, stdout=subprocess.DEVNULL)
 
     def find_server(self):
         print('Trying to connect to last used ip.')
         try:
             self.socket.connect((json.load(open("./config.json", 'r'))['server']['ip'], self.server_port))
-            
             return
         except Exception as e:
             print(f'Failed to connect to last used server. Error:{e} Finding new.')

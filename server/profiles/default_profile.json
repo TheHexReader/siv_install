@@ -3,10 +3,7 @@
         "last_time_used": "placeholder",
         "role": "user",
         "list_of_programs":[
-            "googlechrome",
-            "vscode",
-            "mysql_server",
-            "mysql_workbench"
+            "GoogleChrome"
         ]
     }
 }
