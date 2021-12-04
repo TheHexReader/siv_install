@@ -2,6 +2,7 @@ import socket
 import os
 import random
 import ast
+import json
 
 class Client:
     
@@ -26,7 +27,6 @@ class Client:
         self.install_programs()
     
     def handshake(self):
-        self.socket.connect((self.server_address, self.server_port))
         self.socket.send(self.hello_message.encode('ascii'))
         if self.socket.recv(1024).decode('ascii') != self.hello_message:
             print('Wrong message from server')
@@ -51,19 +51,30 @@ class Client:
     def recive_profile(self):
         self.socket.send(self.key.encode('ascii'))
         self.list_of_programms = ast.literal_eval(self.socket.recv(4096).decode('ascii'))
+        print('Recived profile.')
 
     def install_programs(self):
         pass
 
     def find_server(self):
-        for i in range(255):
-            print(f"Trying to connect to {self.local_net}{i + 1}")
-        print('Can\'t find server, exiting.')
+        print('Trying to connect to last used ip.')
+        try:
+            self.socket.connect((json.load(open("./config.json", 'r'))['server']['ip'], self.server_port))
+            
+            return
+        except Exception as e:
+            print(f'Failed to connect to last used server. Error:{e} Finding new.')
+        for i in range(1,256):
+            print(f"Trying to connect to {self.local_net}{i}:{self.server_port}", end='\r')
+            try:
+                self.socket.connect((f'{self.local_net}{i}', self.server_port))
+            except Exception:
+                continue
+            print(f"Found server on {self.local_net}{i}:{self.server_port}, saving for future connections.")
+            open('./config.json', 'w').write(json.dumps({"server":{"ip":f'{self.local_net}{i}'}}))
+            return
+        print('\nCan\'t find server, exiting.')
         exit()
-    
-    def test_connection(self, ip, port):
-        pass
-
 
 if __name__ == "__main__":
     Client()
